@@ -4,7 +4,7 @@
  */
 
 // Import data from data.js
-import { CONSTANTS, LIST_VARIABLES, MASSES } from './data.js';
+import { CONSTANTS, DEP_CONSTANTS, LIST_VARIABLES, MASSES } from './data.js';
 // Import custom functions and the setter from custom_functions.js
 import { customFunctions, setMassesData } from './custom_functions.js';
 
@@ -155,7 +155,7 @@ function renderVariables(constants, lists, customFuncs, masses) {
     massGrid.className = 'grid grid-cols-2 gap-2';
     
     const massKeys = Object.keys(masses).sort();
-    const keysToDisplay = massKeys.slice(0, 10); 
+    const keysToDisplay = massKeys.slice(0, massKeys.length); //replace massKeys.length by 10 to display only 10
 
     keysToDisplay.forEach(key => {
          const massEntry = document.createElement('div');
@@ -167,12 +167,14 @@ function renderVariables(constants, lists, customFuncs, masses) {
          massGrid.appendChild(massEntry);
     });
     
+    /**
     if (massKeys.length > 10) {
          const more = document.createElement('p');
          more.className = 'text-xs text-gray-500 mt-2 col-span-2';
          more.textContent = `... and ${massKeys.length - 10} more. Use m(key) for lookup.`;
          massGrid.appendChild(more);
     }
+    */
     
     listsMassesEl.appendChild(massGrid);
 
@@ -244,7 +246,7 @@ function handleKey(event) {
 function init() {
     try {
         // 1. Parse and validate all data
-        parsedConstants = parseConstants(CONSTANTS);
+        parsedConstants = parseConstants({ ...CONSTANTS, ...DEP_CONSTANTS});
         parsedMasses = parseMasses(MASSES);
         // Lists depend on valid constants AND masses
         parsedListVariables = parseLists(LIST_VARIABLES, parsedConstants);
