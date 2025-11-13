@@ -83,6 +83,7 @@ function getExecutionContext(constants, lists, customFuncs, masses) {
         // Expose Math object methods globally
         Math: Math,
         sin: Math.sin, cos: Math.cos, tan: Math.tan, 
+        arcsin: Math.asin, arccos: Math.acos, arctan: Math.atan, 
         log: Math.log, log10: Math.log10, exp: Math.exp, 
         sqrt: Math.sqrt, abs: Math.abs, pow: Math.pow,
         PI: Math.PI, E: Math.E,
@@ -98,41 +99,54 @@ function getExecutionContext(constants, lists, customFuncs, masses) {
 }
 
 
+
+
+// mathFunctions
+
+const mathFunctions = [
+    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9","+", "-", "*", "/", "^", "(", ")", "[", "]"],
+    ["sin()", "cos()", "tan()","arcsin()", "arccos()", "arctan()"],
+    ["log()", "log10()", "exp()", "sqrt()", "abs()", "pow()"],
+    ["sum()", "product()"]
+]
+
 // --- UI Rendering ---
 
 function renderVariables(constants, lists, customFuncs, masses) {
     const constantsListEl = document.getElementById('constants-list');
-    const listsMassesEl = document.getElementById('lists-masses-display');
+    const listsListEl = document.getElementById('lists-display');
+    const massesListEl = document.getElementById('masses-list-display');
+    const mathFunctionsListEl = document.getElementById('math-functions-list');
     const functionsListEl = document.getElementById('functions-list');
     
-    // 1. Render Constants
+    // Render Constants
     constantsListEl.innerHTML = '';
     for (const [key, value] of Object.entries(constants)) {
-        const constantCard = document.createElement('div');
-        constantCard.className = 'p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm';
+        const constantCard = document.createElement('button');
+        constantCard.onclick = function() { insertTextAtCursor(`${key}`)};
+        constantCard.className = 'w-32 p-3 bg-indigo-50 rounded-lg border border-gray-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
         constantCard.innerHTML = `
-            <p class="text-sm font-medium text-gray-900">${key}:</p>
-            <code class="text-base text-secondary font-mono">${value.toPrecision(8)}</code>
+            <p class="text-sm font-medium text-gray-900" >${key}:</p>
+            <code class="text-xs text-secondary font-mono break-all">${value.toPrecision(5)}</code>
         `;
         constantsListEl.appendChild(constantCard);
     }
 
-    // 2. Render Lists and Masses
-    listsMassesEl.innerHTML = '';
+    // Render Lists
+    listsListEl.innerHTML = '';
     
-    // Lists Title
-    const listTitle = document.createElement('h3');
-    listTitle.className = 'text-lg font-semibold text-gray-700 mb-2';
-    listTitle.textContent = 'Lists:';
-    listsMassesEl.appendChild(listTitle);
+    
 
     // Lists Content (Displays the calculated values in the list)
     for (const [key, values] of Object.entries(lists)) {
-        const listCard = document.createElement('div');
-        listCard.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm mb-4';
+        const listCard = document.createElement('button');
+        listCard.className = 'p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm mb-4 transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
         
         // Find the original string list for display clarity
         const originalList = LIST_VARIABLES[key];
+        
+        
+        listCard.onclick = function() { insertTextAtCursor(`${key}`)};
 
         listCard.innerHTML = `
             <p class="text-sm font-medium text-gray-900 mb-2">${key} (Array of Values)</p>
@@ -142,14 +156,14 @@ function renderVariables(constants, lists, customFuncs, masses) {
                 ).join('')}
             </div>
         `;
-        listsMassesEl.appendChild(listCard);
+        listsListEl.appendChild(listCard);
     }
     
-    // Masses Title
-    const massTitle = document.createElement('h3');
-    massTitle.className = 'text-lg font-semibold text-gray-700 mt-4 mb-2';
-    massTitle.textContent = 'Particle Masses (MeV/c²):';
-    listsMassesEl.appendChild(massTitle);
+    
+    //Render Masses
+    
+    massesListEl.innerHTML = '';
+    
 
     const massGrid = document.createElement('div');
     massGrid.className = 'grid grid-cols-2 gap-2';
@@ -158,10 +172,11 @@ function renderVariables(constants, lists, customFuncs, masses) {
     const keysToDisplay = massKeys.slice(0, massKeys.length); //replace massKeys.length by 10 to display only 10
 
     keysToDisplay.forEach(key => {
-         const massEntry = document.createElement('div');
-         massEntry.className = 'p-2 bg-indigo-50 rounded-md border border-indigo-200 text-sm';
+        const massEntry = document.createElement('button');
+        massEntry.onclick = function() { insertTextAtCursor(`m(\"${key}\")`)};
+         massEntry.className = 'p-2 bg-indigo-50 rounded-md border border-indigo-200 text-sm shadow-sm transition duration-200 transform active:scale-75 active:bg-indigo-10 active:shadow-inner';
          massEntry.innerHTML = `
-             <span class="font-medium text-indigo-700">m(${key}):</span>
+             <span class="font-medium text-indigo-700">m(\"${key}\"):</span>
              <code class="font-mono text-xs text-gray-600">${masses[key].toPrecision(4)}</code>
          `;
          massGrid.appendChild(massEntry);
@@ -176,14 +191,35 @@ function renderVariables(constants, lists, customFuncs, masses) {
     }
     */
     
-    listsMassesEl.appendChild(massGrid);
+    massesListEl.appendChild(massGrid);
+    
+    
+    
+    //  Render Math Functions
+    mathFunctionsListEl.innerHTML = '';
+    for (const [i,mathFuncSet] of Object.entries(mathFunctions)) {
+    for (const [index,key] of Object.entries(mathFuncSet)) {
+         const funcCard = document.createElement('button');
+        funcCard.onclick = function() { insertTextAtCursor(`${key}`)};
+        funcCard.className = 'min-w-7 p-2 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
+        // Attempt to extract arguments for display
+        //const argsMatch = func.toString().match(/\((.*?)\)/);
+        //const args = argsMatch ? argsMatch[1].replace(/\s*,\s*/g, ', ') : '';
+        
+        funcCard.innerHTML = `
+            <p class="text-sm font-medium text-indigo-700">${key}</p>
+        `;
+        mathFunctionsListEl.appendChild(funcCard);
+    }mathFunctionsListEl.appendChild(document.createElement('br'))
+    }
 
 
-    // 3. Render Custom Functions
+    //  Render Custom Functions
     functionsListEl.innerHTML = '';
     for (const [key, func] of Object.entries(customFuncs)) {
-         const funcCard = document.createElement('div');
-        funcCard.className = 'p-2 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm';
+         const funcCard = document.createElement('button');
+        funcCard.onclick = function() { insertTextAtCursor(`${key}()`)};
+        funcCard.className = 'p-2 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
         // Attempt to extract arguments for display
         const argsMatch = func.toString().match(/\((.*?)\)/);
         const args = argsMatch ? argsMatch[1].replace(/\s*,\s*/g, ', ') : '';
@@ -194,9 +230,55 @@ function renderVariables(constants, lists, customFuncs, masses) {
     }
 }
 
+// hotkeys for entering functions and other variables to input area
+
+function insertTextAtCursor( textToInsert, input_element='expression-input') {
+  // 1. Get the input element
+  const input = document.getElementById(input_element);
+  
+  // 2. Check if the element exists and is a text input
+  if (!input) {
+    console.error(`Could not find the input element with id \"${expression-input}\".`);
+    return;
+  }
+
+  // 3. Get the current cursor position (selection start and end)
+  const startPos = input.selectionStart;
+  const endPos = input.selectionEnd;
+  const originalValue = input.value;
+
+  // 4. Construct the new value
+  // This takes the part before the cursor, adds the new text, and then adds the part after the cursor.
+  const newValue = originalValue.substring(0, startPos) + 
+                   textToInsert + 
+                   originalValue.substring(endPos, originalValue.length);
+
+  // 5. Update the input value
+  input.value = newValue;
+
+  // 6. Calculate the new cursor position
+  // The cursor should be moved forward by the length of the text we inserted.
+  const newCursorPos = startPos + textToInsert.length;
+
+  // 7. Set the cursor position (must be done *after* changing the value)
+  // We use a small timeout to ensure the DOM has fully updated, which is safer for cursor manipulation.
+  setTimeout(() => {
+    input.selectionStart = newCursorPos;
+    input.selectionEnd = newCursorPos;
+    // Bring focus back to the input field so the user can keep typing immediately
+    input.focus(); 
+  }, 0);
+}
+
+
+
+
+
+
 // --- Core Calculation Logic ---
 
 function calculate() {
+    
     const inputElement = document.getElementById('expression-input');
     const resultElement = document.getElementById('result-value');
     const expression = inputElement.value;
