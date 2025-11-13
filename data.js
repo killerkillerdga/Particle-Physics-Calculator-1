@@ -4,15 +4,44 @@
  */
 
 export const CONSTANTS = {
-    "e_": "1.602176634e-19",
+    "e": "1.602176634e-19",
     "c": "299792458",
     "h": "6.62607015e-34",
     "R": "8.3144621",
     "G": "6.6743e-11",
     "pi": "3.14159265359",
-    "e": "2.71828182845",
-    "m_e": "9.1093837015e-31"
+    /*"e": "2.71828182845",*/
+    "m_e": "9.1093837015e-31",
+    "hbar": "1.05457e-34",
+    "hbar_MeV": "6.58212e-22",
+    "alpha":`${1/137.035999177}`,
+    "thetaW": `${28.76*Math.PI/180}`,
+    "gg": "1.214"
+    
 };
+
+
+export const DEP_CONSTANTS = {
+    /*"e2":`${CONSTANTS["e"]**2}`*/
+    
+    "epsilon0": `${(CONSTANTS["e"]**2)/(CONSTANTS["alpha"]*CONSTANTS["hbar"]*CONSTANTS["c"]*4*Math.PI)}`,
+    
+    "ge":`${Math.sqrt(4*Math.PI*CONSTANTS["alpha"])}`,
+    get "gW"(){ 
+        return this["ge"]/Math.sin(CONSTANTS["thetaW"]);
+    },  
+    get "gZ"(){ 
+        return this["ge"]/(Math.sin(CONSTANTS["thetaW"])*Math.cos(CONSTANTS["thetaW"]));
+    },
+    
+    
+    
+    
+    
+    
+    
+    
+};    
 
 
 
@@ -95,6 +124,7 @@ export const MASSES = {
 };
 
 export const LIST_VARIABLES = {
+    
     "Leptons": ["m(e)", "m(mu)", "m(tau)", "m(nu_e)", "m(nu_mu)", "m(nu_tau)"],
     "Nucleons": ["m(p)", "m(n)"]
 };
