@@ -140,7 +140,7 @@ function getExecutionContext(constants, lists, customFuncs, masses) {
 // mathFunctions
 
 const mathFunctions = [
-    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".",  "+", "-", "*", "/", "^"],
+    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".",  "+", "-", "*", "/", "^", "%"],
     [",", "(", ")", "[", "]"],
     ["sin()", "cos()", "tan()","arcsin()", "arccos()", "arctan()", "π"],
     ["log()", "log10()", "exp()", "sqrt()", "abs()", "pow()", "fact()", "E"],
@@ -555,7 +555,7 @@ function calculate() {
     try {
         const context = getExecutionContext(parsedConstants, parsedListVariables, customFunctions, parsedMasses);
         // Replace ^ with ** for standard JavaScript power operation
-        const preparedExpression = expression.trim().replace(/\^/g, '**');
+        const preparedExpression = expression.trim().replace(/\^/g, '**').replaceAll('%','*0.01');
 
         const argNames = Object.keys(context);
         const argValues = Object.values(context);
