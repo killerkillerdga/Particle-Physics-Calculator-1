@@ -12,6 +12,8 @@ let elementToRestore = null;
 
 let prevResult = '';
 
+let history_list =[];
+
 // --- Initialization and Parsing ---
 
 function parseConstants(constantsObj) {
@@ -138,7 +140,8 @@ function getExecutionContext(constants, lists, customFuncs, masses) {
 // mathFunctions
 
 const mathFunctions = [
-    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "+", "-", "*", "/", "^", "(", ")", "[", "]"],
+    ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".",  "+", "-", "*", "/", "^"],
+    [",", "(", ")", "[", "]"],
     ["sin()", "cos()", "tan()","arcsin()", "arccos()", "arctan()", "π"],
     ["log()", "log10()", "exp()", "sqrt()", "abs()", "pow()", "fact()", "E"],
     ["sum()", "product()"]
@@ -160,10 +163,10 @@ function renderVariables(constants, lists, customFuncs, masses) {
         constantCard.onclick = function() { insertTextAtCursor(`${key}`)};
         constantCard.onmousedown= saveFocus ;
         constantCard.ontouchstart=saveFocus;
-        constantCard.className = 'w-32 p-3 h-14 bg-indigo-50 rounded-lg border border-gray-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
+        constantCard.className = 'p-2 bg-indigo-50 rounded-lg border border-gray-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
         constantCard.innerHTML = `
-            <p class="text-sm font-medium text-gray-900" >${key}:</p>
-            <code class="text-xs text-secondary font-mono break-all">${value.toPrecision(5)}</code>
+            <p class="text-sm font-medium text-gray-900" >${key}: 
+            <code class="text-xs text-secondary font-mono break-all">${value.toPrecision(5)}</code></p>
         `;
         constantsListEl.appendChild(constantCard);
     }
@@ -399,27 +402,26 @@ function shiftCursor( amount=1, input_element='expression-input') {
     
 }
 
-
-function emptyInput(input_element='expression-input') {
-  // 1. Get the input element
-  const input = document.getElementById(input_element);
+function setInput(value, input_element='expression-input') {
+    const input = document.getElementById(input_element);
     
-    
-  
   // Check if the element exists and is a text input
   if (!input) {
     console.error(`Could not find the input element with id \"${input_element}\".`);
     return;
   }
-    
+  
+    input.value=value;
+  
+}
+
+
+function emptyInput(input_element='expression-input') {
+  
+    setInput('',input_element);
+  
 
   
-    input.value='';
-
-  
-  
-
-  // 7. Set the cursor position (must be done *after* changing the value)
   // We use a small timeout to ensure the DOM has fully updated, which is safer for cursor manipulation.
   setTimeout(() => {
     
@@ -486,6 +488,46 @@ function backSpace(input_element='expression-input', take_in_para=true) {
 }
 
 
+function disableDiv(elemID) {
+    // Store the original display value (if needed, otherwise default is fine)
+    // Here we just set it directly to 'none'
+    document.getElementById(elemID).style.display = 'none';
+}
+
+function enableDiv(elemID) {
+    // Restore the original display value (e.g., 'block', 'inline-block', etc.)
+    document.getElementById(elemID).style.display = 'block'; // Or whatever its original display type was
+}
+
+
+function addToHistory(input_, result_, precision_=10, historyElId='history-list', input_element='expression-input', result_element='result-value') {
+    const newEntry = [input_,result_];
+    const index_ = history_list.findIndex(entry => entry[0] === input_);
+    if ( index_ > -1) {
+        history_list.splice(index_,1);
+        document.getElementById(`history-${input_}`).remove();
+    }
+    history_list.push(newEntry);
+    
+    const hisEl = document.getElementById(historyElId);
+    
+    const hisCard = document.createElement('button');
+    hisCard.id = `history-${input_}`;
+    hisCard.onclick = function() { 
+        setInput(input_, input_element);
+        document.getElementById(result_element).textContent = result_.toPrecision(precision_);
+        disableDiv('history');
+        enableDiv('app');
+    };
+    
+    hisCard.className = 'p-2 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm transition duration-200 transform active:scale-75 active:bg-gray-100 active:shadow-inner';
+    hisCard.innerHTML = `${input_} &nbsp = ${result_.toPrecision(precision_)}`;
+    
+    hisEl.appendChild(hisCard);
+    
+}
+
+
 
 
 
@@ -528,8 +570,10 @@ function calculate() {
         }
         
         prevResult = result;
+        addToHistory(expression,result,10, 'history-list', 'expression-input', 'result-value');
         resultElement.textContent = result.toPrecision(10); 
         inputElement.classList.remove('border-red-500', 'border-2');
+        
         
     } catch (e) {
         console.error("Calculation Error:", e);
@@ -572,7 +616,9 @@ function init() {
             saveFocus: saveFocus,
             insertResult: insertResult,
             emptyInput: emptyInput,
-            backSpace: backSpace
+            backSpace: backSpace,
+            disableDiv: disableDiv,
+            enableDiv: enableDiv
             
         };
         window.handleKey = handleKey;
